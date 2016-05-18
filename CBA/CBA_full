@@ -154,32 +154,6 @@ coord_radar <- function (theta = "x", start = 0, direction = 1)
           is_linear = function(coord) TRUE)
 }
 
-#Colores azules-verdes para los proyectos
-cbPalette <- c("#8497B0", "#1F4E79", "#385723", "#548235", "#A9D18E", "#C5E0B4")
-ggplot(sa.data.df.melted, aes(x = variable, y = value)) +
-  geom_polygon(aes(group = project, color = project), fill = NA, size = 2, show.legend = FALSE) +
-  geom_line(aes(group = project, color = project), size = 2) +
-  theme(strip.text.x = element_text(size = rel(0.8)),
-        axis.text.x = element_text(size = rel(0.8)),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank()) +
-  xlab("") + ylab("") +
-  scale_colour_manual(values=cbPalette) +
-  guides(color = guide_legend(ncol=2, title=NULL)) +
-  coord_radar()
-
-ggplot(sa.data.df.melted, aes(x = variable, y = value)) +
-  geom_polygon(aes(group = project, color = project), fill = NA, size = 2) +
-  facet_wrap(~ project) +
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank()) +
-  xlab("") + ylab("") +
-  scale_colour_manual(values=cbPalette) +
-  guides(color = "none") +
-  coord_radar()
-
 #Colores por defecto
 ggplot(sa.data.df.melted, aes(x = variable, y = value)) +
   geom_polygon(aes(group = project, color = project), fill = NA, size = 2, show.legend = FALSE) +
