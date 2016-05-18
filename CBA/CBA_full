@@ -1,0 +1,279 @@
+############################################################
+# CÓDIGO PARA REALIZACIÓN DE ANÁLISIS COSTE-BENEFICIO EN R #
+############################################################
+
+# ---------------------------------- #
+# 1.- FUNCIÓN VALOR ACTUALIZADO NETO #
+# ---------------------------------- #
+
+npv.fun <- function (vector.data) { 
+  # VECTOR DATA : vector en el cual se incluyan los parámetros siguientes
+  # (fijar, dejar como parámetros variables según deseos)
+  # (se introducen como vector para el posterior análisis de sensibilidad)
+  cy <- 4 # cy : Construction years / Años de construcción
+  oy <- 20 # oy : Operation years / Años de operación
+  dy <- 1 # dy : Decommission years / Años de deconstrucción
+  cpx <- vector.data[1] # cpx : CAPEX (total) / Costes de construcción (total)
+  cpx.dist_1 <- 0.1 # cpx.dist : CAPEX distribution in Construction years
+  cpx.dist_2 <- 0.2 # cpx.dist : Distribución de los costes de construcción en los años
+  cpx.dist_3 <- 0.4
+  cpx.dist_4 <- 0.3
+  opx <- vector.data[2] # opx : OPEX (yearly) / Costes de operación (anuales)
+  dcx <- vector.data[3] # dcx : DECEX (total) / Costes de deconstrucción (total)
+  prd_1 <- vector.data[4] # prd : Annual Production / Producción anual
+  prc_1 <- vector.data[5] # prc : Price / Precio de venta
+  prd_2 <- vector.data[6] # Hay tres "outputs" de producción y precio. Adecuar según datos.
+  prc_2 <- vector.data[7]
+  prd_3 <- vector.data[8]
+  prc_3 <- vector.data[9]
+  dr<- vector.data[10] # dr : Discount rate / Tasa de descuento
+  
+  # Year guide
+  year.vector <- c(-(cy-1):(oy+dy))
+  year.dim <- length(year.vector)
+  
+  # CAPEX
+  cpx.vector <- rep(0, year.dim)
+  for (i in 1:cy) {
+    cpx.vector[i] <- cpx.dist[i]*cpx
+  }
+  
+  # OPEX
+  opx.vector <- rep(0, year.dim) 
+  for (i in (cy+1):(cy+oy)) {
+    opx.vector[i] <- opx*runif(1, 0.85, 1.15)
+  }
+  
+  # DECEX
+  dcx.vector <- rep(0, year.dim) 
+  for (i in (cy+oy+1):(cy+oy+dy)) {
+    dcx.vector[i] <- dcx
+  }
+  
+  # REVENUES / Ingresos
+  # Adecuar y ajustar según tipos de ingresos
+  rev.vector <- rep(0, year.dim)
+  for (i in (cy+1):(cy+oy)) {
+    rev.vector[i] <- (prd_1*prc_1) +
+      (prd_2*prc_2) +
+      (prd_3*prc_3)
+  }
+  
+  # BENEFITS / Beneficios
+  ben.vector <- rep(0, year.dim)
+  netben.vector <- rep(0, year.dim)
+  for (i in (1):(year.dim)) {
+    ben.vector[i] <- rev.vector[i]-cpx.vector[i]-opx.vector[i]-dcx.vector[i]
+    netben.vector[i] <- ben.vector[i]/((1+dr)^i)
+  }
+  
+  # NPV + IRR / VAN + TIR
+  npv <- sum(netben.vector)
+  # To calculate irr, both negative and positive values in benefits
+  library(FinCal)
+  irr <- irr(ben.vector)
+  
+  npv.result <- c(npv, irr)
+  npv.result
+}
+
+# ------------------------------------ #
+# 2.- FUNCIÓN ANÁLISIS DE SENSIBILIDAD #
+# ------------------------------------ #
+
+anal.sensit <- function( model, pars.vector.values, pars.vector.names) {
+  # Inputs:
+      # función modelo
+      # vector con los parámetros base del modelo
+      # vector con los nombres de los parámetros
+  pars.dim <- length(pars.vector.values)
+  
+  # Steps del análisis. -5%, -2.5%, 0, 2.5%, 5%
+  steps <- c(-0.05, -0.025, 0, 0.025, 0.05)
+  abs.df <- data.frame(steps)
+  perc.df <- data.frame(steps)
+  
+  column.names <- rep(0, pars.dim+1)
+  column.names[1] = "Change in parameter"
+  # Este ciclo está ajustado para cinco steps (a, b, c, d, e)
+  for (i in 1:pars.dim){
+    column.names[i+1] = pars.vector.names[i]
+    pars.vector.sensit <- pars.vector.values
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[1])
+    a <- model(pars.vector.sensit)
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[2])
+    b <- model(pars.vector.sensit)
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[3])
+    c <- model(pars.vector.sensit)
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[4])
+    d <- model(pars.vector.sensit)
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[5])
+    e <- model(pars.vector.sensit)
+    abs.df <- cbind(abs.df, c(a,b,c,d,e))
+    perc.df <- cbind(perc.df, c(100*(a-c)/c, 100*(b-c)/c, 0, 100*(d-c)/c, 100*(e-c)/c))
+  }
+  colnames(abs.df) <- column.names
+  colnames(perc.df) <- column.names
+  perc.df
+}
+
+# ------------------------------------------ #
+# 3.- EJECUCIÓN DEL ANÁLISIS DE SENSIBILIDAD #
+# ------------------------------------------ #
+
+# Copiar y pegar para analizar varias alternativas
+model_1.param <- c(a, b, c, d, e, f, g, h, i, j)
+model_1.names <- c("CAPEX", "OPEX", "DECEX", "Produc. 1", "Price 1",
+                         "Produc. 2", "Price 2",
+                         "Produc. 3", "Price 3", "Discount Rate")
+model_1.sa.df <- anal.sensit(npv.fun, model_1.param, model_1.names)
+model_1.sa.df$project <- "model_1"
+
+
+# Manipular los datos para presentarlos
+sa.data.df <- model_1.sa.df[-c(1,2,3,5),]
+sa.data.df <- rbind(sa.data.df, model_2.sa.df[-c(1,2,3,5),])
+sa.data.df <- rbind(sa.data.df, model_3.sa.df[-c(1,2,3,5),])
+sa.data.df <- sa.data.df[,-c(1)]
+
+sa.data.df.melted <- reshape2::melt(sa.data.df)
+sa.data.df.melted$value <- abs(sa.data.df.melted$value)
+
+# Representación gráfica
+library(ggplot2)
+
+# Transformación polar
+coord_radar <- function (theta = "x", start = 0, direction = 1) 
+{
+  theta <- match.arg(theta, c("x", "y"))
+  r <- if (theta == "x") 
+    "y"
+  else "x"
+  ggproto("CordRadar", CoordPolar, theta = theta, r = r, start = start, 
+          direction = sign(direction),
+          is_linear = function(coord) TRUE)
+}
+
+#Colores azules-verdes para los proyectos
+cbPalette <- c("#8497B0", "#1F4E79", "#385723", "#548235", "#A9D18E", "#C5E0B4")
+ggplot(sa.data.df.melted, aes(x = variable, y = value)) +
+  geom_polygon(aes(group = project, color = project), fill = NA, size = 2, show.legend = FALSE) +
+  geom_line(aes(group = project, color = project), size = 2) +
+  theme(strip.text.x = element_text(size = rel(0.8)),
+        axis.text.x = element_text(size = rel(0.8)),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  xlab("") + ylab("") +
+  scale_colour_manual(values=cbPalette) +
+  guides(color = guide_legend(ncol=2, title=NULL)) +
+  coord_radar()
+
+ggplot(sa.data.df.melted, aes(x = variable, y = value)) +
+  geom_polygon(aes(group = project, color = project), fill = NA, size = 2) +
+  facet_wrap(~ project) +
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  xlab("") + ylab("") +
+  scale_colour_manual(values=cbPalette) +
+  guides(color = "none") +
+  coord_radar()
+
+#Colores por defecto
+ggplot(sa.data.df.melted, aes(x = variable, y = value)) +
+  geom_polygon(aes(group = project, color = project), fill = NA, size = 2, show.legend = FALSE) +
+  geom_line(aes(group = project, color = project), size = 2) +
+  theme(strip.text.x = element_text(size = rel(0.8)),
+        axis.text.x = element_text(size = rel(0.8)),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  xlab("") + ylab("") +
+  guides(color = guide_legend(ncol=2, title=NULL)) +
+  coord_radar()
+
+ggplot(sa.data.df.melted, aes(x = variable, y = value)) +
+  geom_polygon(aes(group = project, color = project), fill = NA, size = 2) +
+  facet_wrap(~ project) +
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  xlab("") + ylab("") +
+  guides(color = "none") +
+  coord_radar()
+
+
+# ----------------------- #
+# 4.- ANÁLISIS MONTECARLO #
+# ----------------------- #
+
+model_1.mc.df <- data.frame(npv=numeric(0), irr=numeric(0))
+for (i in 1:500) {
+  # Distribuciones de probabilidad de cada parámetro
+  a <- runif(n, min = 0, max = 1)
+  b <- rnorm(n, mean = 0, sd = 1)
+  c <- rgamma(n, shape, rate = 1, scale = 1/rate)
+  d <- rbinom(n, size, prob)
+  e <- rpois(n, lambda)
+  f <- rbeta(n, shape1, shape2, ncp = 0)
+  g <- runif(n, min = 0, max = 1)
+  h <- runif(n, min = 0, max = 1)
+  i <- runif(n, min = 0, max = 1)
+  j <- runif(n, min = 0, max = 1)
+  model_1.param <- c(a, b, c, d, e, f, g, h, i, j)
+  # Llamada a la función y almacenar datos
+  model_1.mc.df <- rbind(model_1.mc.df, npv.fun(vector.data))
+}
+
+# DATA PREPARATION
+colnames(model_1.mc.df) <- c("npv", "irr")
+colnames(model_2.mc.df) <- c("npv", "irr")
+
+model_1.mc.sort <- (model_1.mc.df$npv)
+model_1.mc.sort <- sort(model_1.mc.sort.sort, decreasing=FALSE)
+model_2.mc.sort <- (model_2.mc.df$npv)
+model_2.mc.sort <- sort(model_2.mc.sort.sort, decreasing=FALSE)
+
+# Sequence by 1/num.cases, 1/500 = 0.004
+model_1.mc.sort <- data.frame(model_1.mc.sort, seq(from = 0.002, to = 1, by = 0.002))
+model_1.mc.sort$proj <- rep('model_1', 500)
+colnames(model_1.mc.sort) <- c("npv", "prob", "model")
+model_2.mc.sort <- data.frame(model_2.mc.sort, seq(from = 0.002, to = 1, by = 0.002))
+model_2.mc.sort$proj <- rep('model_2', 500)
+colnames(model_2.mc.sort) <- c("npv", "prob", "model")
+
+npv.mc.df.mix <- rbind(model_1.mc.sort, 
+                       model_2.mc.sort)
+
+
+# REPRESENTATION
+library(ggplot2)
+# Plot de funciones de densidad
+ggplot(npv.df.mix, aes(npv, fill = model, colour = model)) +
+  geom_density(alpha = 0.1) +
+  xlim(55, 70)
+
+# Plot de histograma
+ggplot(npv.df.mix, aes(npv, fill = model)) +
+  geom_histogram(binwidth = 500)
+
+# Plot de polígono de frecuencias
+ggplot(npv.df.mix, aes(npv, colour = model)) +
+  geom_freqpoly(binwidth = 500)
+
+# Plot de funciones de distribución
+ggplot(npv.df.mix, aes(npv, colour = model)) +
+  stat_ecdf()
+
+# Plot de funciones de densidad con más parámetros
+ggplot(npv.df.mix) +
+  geom_density(aes(x = npv, colour = model, fill = model), alpha=.75) +
+  geom_line(aes(x = npv, colour = model), stat="density", size=0.65) + 
+  geom_vline(xintercept=0, alpha=.75, size=0.5) +
+  ggtitle("Net Present Value density function, by project") +
+  xlab("Net Present Value") + ylab("Probability") +
+  theme(legend.position=c(0.25,0.65)) +
+  scale_colour_discrete(guide=FALSE) + 
+  scale_fill_discrete(labels=c("Model 1", "Model 2")) +
+  guides(fill=guide_legend(title=NULL))
