@@ -154,8 +154,6 @@ model_1.sa.df$project <- "model_1"
 
 # Manipular los datos para presentarlos
 sa.data.df <- model_1.sa.df[-c(1,2,3,5),]
-sa.data.df <- rbind(sa.data.df, model_2.sa.df[-c(1,2,3,5),])
-sa.data.df <- rbind(sa.data.df, model_3.sa.df[-c(1,2,3,5),])
 sa.data.df <- sa.data.df[,-c(1)]
 
 sa.data.df.melted <- reshape2::melt(sa.data.df)
