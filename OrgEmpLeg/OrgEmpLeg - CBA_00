@@ -1,0 +1,98 @@
+############################################################
+# CÓDIGO PARA REALIZACIÓN DE ANÁLISIS COSTE-BENEFICIO EN R #
+############################################################
+#                          ACB-00                          #
+############################################################
+
+
+# --------------------- #
+# 1.- VALORES CASO BASE #
+# --------------------- #
+# Land costs
+land.cost <- 36204000
+# Construction costs
+cons.cost <- 327300000
+# General management costs
+mgmt.cost <- 8450000
+# Operation costs
+oper.cost <- 851
+# Human resources costs
+humr.cost <- 32000
+# Recovery costs
+reco.cost <- 45200000
+# Selling price
+pric.inco <- 2008
+# Production
+prod.data <- 63000
+# Tasa de descuento
+disc.rate <- 0.035
+# Horizonte temporal 
+hozt.temp <- 13
+
+
+# -------------------------- #
+# 2.- VALOR ACTUALIZADO NETO #
+# -------------------------- #
+ 
+# SERIES TEMPORALES #
+# ----------------- #
+# Años
+year.vector <- c(1999:(2017+3+hozt.temp+2))
+
+# Land costs
+land.cost.vector <- rep(0, length(year.vector))
+land.cost.vector[1] <- land.cost
+  
+# Construction costs
+cons.cost.vector <- rep(0, length(year.vector))
+for (i in 0:2){
+  cons.cost.vector[(2017-1999)+i] <- cons.cost/3
+}
+  
+# General management costs
+mgmt.cost.vector <- rep(0, length(year.vector))
+for (i in 1:hozt.temp){
+  mgmt.cost.vector[(2017+3-1999-1)+i] <- mgmt.cost
+}
+  
+# Operation costs
+oper.cost.vector <- rep(0, length(year.vector))
+for (i in 1:hozt.temp){
+  oper.cost.vector[(2017+3-1999-1)+i] <- oper.cost*prod.data
+}
+  
+# Human resources costs
+humr.cost.vector <- rep(0, length(year.vector))
+for (i in 1:hozt.temp){
+  humr.cost.vector[(2017-1999-1)+i] <- humr.cost*150
+}
+  
+# Recovery costs
+reco.cost.vector <- rep(0, length(year.vector))
+for (i in 1:2){
+  reco.cost.vector[(2017-1999+hozt.temp)+i] <- reco.cost/2
+}
+  
+# Incomes
+inco.cost.vector <- rep(0, length(year.vector))
+for (i in 1:hozt.temp){
+  inco.cost.vector[(2017-1999-1)+i] <- pric.inco*prod.data
+}
+  
+# --------------------- # 
+# BENEFITS / Beneficios #
+# --------------------- #
+ben.vector <- rep(0, length(year.vector))
+netben.vector <- rep(0, length(year.vector))
+for (i in (1):(length(year.vector))) {
+  ben.vector[i] <- -land.cost.vector[i]-cons.cost.vector[i]-mgmt.cost.vector[i]-
+                    oper.cost.vector[i]-humr.cost.vector[i]-reco.cost.vector[i]+
+                    inco.cost.vector[i]
+  netben.vector[i] <- ben.vector[i]/((1+disc.rate)^i)
+}
+  
+# --------- # 
+# NPV / VAN #
+# --------- #
+npv.result <- sum(netben.vector)
+npv.result
