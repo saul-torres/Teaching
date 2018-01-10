@@ -1,0 +1,444 @@
+---
+title: "Uso de R en el desarrollo de ACB"
+author: "Saúl Torres Ortega"
+date: "November 2016"
+output:
+  revealjs::revealjs_presentation:
+    theme: sky
+    
+---
+
+## Introducción
+<section data-background="#dddddd">
+En este taller se verá cómo aplicar el lenguaje de programación R a:
+
+- La realización de un Análisis Coste-Beneficio (económico y/o financiero).
+- La realización de un análisis de sensibilidad.
+- La realización de un análisis de riesgo.
+</section>
+
+# R
+
+## Qué es R?
+R es un proyecto que conjuga dos aspectos diferentes (aunque íntimamente relacionados): por un lado es un lenguaje de programación, y por otro es un entorno de trabajo.  
+
+Su entorno de trabajo (el conjunto de ventanas y menús que normalmente asociamos a un programa) puede resultar a veces "poco amigable". Es por ello que han surgido otros programas que nos proporcionan un entorno de trabajo más atractivo y funcional. Uno de estos programas es RStudio.
+
+
+## Descargar e instalar R
+Accedemos a la web de R y descargamos la última versión disponible.
+
+- [R Project](https://www.r-project.org/)
+- [Link de descargas](https://cran.r-project.org/)
+
+Una vez hemos descargado el archivo, le ejecutamos e instalamos.
+
+
+## Descargar e instalar RStudio
+Al igual que con R, accedemos a la web de RStudio y descargamos la última versión disponible. Para nuestros propósitos, descargaremos la versión "RStudio Desktop - Open Source Edition".
+
+- [RStudio](https://www.rstudio.com/)
+- [Link de descargas](https://www.rstudio.com/products/RStudio/#Desktop)
+
+Una vez hemos descargado el archivo, le ejecutamos e instalamos.
+
+
+## Básicos de R
+Existen tres libros que sirven como buena base de aprendizaje para cualquier novato que aterrice en R. En todos ellos se tratan los primeros pasos y sirven para empezar a trastear.
+
+- [R by Example](http://www.springer.com/br/book/9781461413646)
+- [R in a Nutshell](http://shop.oreilly.com/product/9780596801717.do)
+- [R Cookbook](http://www.cookbook-r.com/)
+
+Igualmente hay páginas gratuitas con interesantes tutoriales de iniciación, como por ejemplo [este](http://www.r-bloggers.com/how-to-learn-r-2/).
+
+Tenéis algunos links más sobre R [aquí](https://sites.google.com/site/saultorresortega/r).
+
+
+# Caso práctico a utilizar
+
+## Skjern River
+
+En este taller vamos a aplicar la metodología del análisis coste-beneficio a un determinado proyecto de inversión, y los vamos a realizar utilizando en todo momento el lenguaje R. Vamos a analizar el **Caso Práctico #5: "Cost-benefit analysis of the Skjern River restoration project"**. Si no dispones de él puedes descargarlo de aquí: https://sites.google.com/site/saultorresortega/docencia/epsp
+
+## Simplificación del caso
+
+  Concept               TOTAL       ANNUAL
+------------------- ------------- -----------
+**COSTS**
+Construction costs   145.000.000        -
+Operat. Maintenan.       -           860.000
+Forgone rents            -          3.000.000
+**BENEFITS**
+Improved land            -           860.000
+Flood risk               -            30.000
+Hunting                  -           500.000
+
+
+# Código ACB-01
+
+## Definición de costes
+```{r}
+# COSTES #
+# ------ #
+# Construction costs
+cons.cost <- 145000000
+# Años 1998, 1999, 2000, 2001, 2002
+cons.cost.dist <- c(0.05, 0.17, 0.33, 0.25, 0.20)
+# Operation and maintenance
+oper.cost <- 860000
+# Forgone land rent
+land.cost <- 3000000
+```
+
+## Definición de ingresos
+```{r}
+# INGRESOS #
+# -------- #
+# Improved land alocation
+land.inco <- 860000
+#Flood risk
+flood.inco <- 30000
+# Hunting
+hunt.inco <- 500000
+```
+
+## Definición de parámetros básicos
+```{r}
+# PARÁMETROS BÁSICOS #
+# ------------------ #
+# Tasa de descuento
+disc.rate <- 0.03
+# Horizonte temporal 
+hozt.temp <- 25
+```
+
+## Construcción de series temporales
+```{r}
+# SERIES TEMPORALES #
+# ----------------- #
+# Años
+year.vector <- c(1:hozt.temp)
+# Construction costs
+cons.cost.vector <- rep(0, hozt.temp)
+for (i in 1:length(cons.cost.dist)) {
+  cons.cost.vector[i] <- cons.cost.dist[i]*cons.cost
+}
+# Operation and maintenance
+oper.cost.vector <- rep(0, hozt.temp)
+for (i in length(cons.cost.dist+1):hozt.temp) {
+  oper.cost.vector[i] <- oper.cost
+}
+# Forgone land rent
+land.cost.vector <- rep(0, hozt.temp)
+for (i in length(cons.cost.dist+1):hozt.temp) {
+  land.cost.vector[i] <- land.cost
+}
+# Improved land alocation
+land.inco.vector <- rep(0, hozt.temp)
+for (i in length(cons.cost.dist+1):hozt.temp) {
+  land.inco.vector[i] <- land.inco
+}
+#Flood risk
+flood.inco.vector <- rep(0, hozt.temp)
+for (i in length(cons.cost.dist+1):hozt.temp) {
+  flood.inco.vector[i] <- flood.inco
+}
+# Hunting
+hunt.inco.vector <- rep(0, hozt.temp)
+for (i in length(cons.cost.dist+1):hozt.temp) {
+  hunt.inco.vector[i] <- hunt.inco
+}
+```
+
+## Beneficios
+```{r}
+# --------------------- # 
+# BENEFITS / Beneficios #
+# --------------------- #
+ben.vector <- rep(0, hozt.temp)
+netben.vector <- rep(0, hozt.temp)
+for (i in (1):(hozt.temp)) {
+  ben.vector[i] <- land.inco.vector[i]+flood.inco.vector[i]+hunt.inco.vector[i]-
+                   cons.cost.vector[i]-oper.cost.vector[i]-land.cost.vector[i]
+  netben.vector[i] <- ben.vector[i]/((1+disc.rate)^i)
+}
+```
+
+## Cálculo del VAN
+```{r}
+# --------------------- # 
+# NPV + IRR / VAN + TIR #
+# --------------------- #
+npv <- sum(netben.vector)
+# To calculate irr, both negative and positive values in benefits
+library(FinCal)
+#irr <- irr(ben.vector)
+
+npv.result <- c(npv) #, irr)
+```
+```{r, echo=FALSE}
+npv.result
+```
+
+# Código ACB-02
+
+## Definición de la función npv.fun
+```{r}
+# ---------------------------------- #
+# 1.- FUNCIÓN VALOR ACTUALIZADO NETO #
+# ---------------------------------- #
+
+npv.fun <- function (vector.data) { 
+  # VECTOR DATA : vector en el cual se incluyan los parámetros siguientes
+  # (fijar, dejar como parámetros variables según deseos)
+  # (se introducen como vector para el posterior análisis de sensibilidad)
+  
+  # COSTES #
+  # ------ #
+  # Construction costs
+  cons.cost <- vector.data[1]
+  # Años 1998, 1999, 2000, 2001, 2002
+  cons.cost.dist <- c(0.05, 0.17, 0.33, 0.25, 0.20)
+  # Operation and maintenance
+  oper.cost <- vector.data[2]
+  # Forgone land rent
+  land.cost <- vector.data[3]
+  
+  
+  # INGRESOS #
+  # -------- #
+  # Improved land alocation
+  land.inco	<- vector.data[4]
+  #Flood risk
+  flood.inco <- vector.data[5]
+  # Hunting
+  hunt.inco <- vector.data[6]
+  
+  
+  # PARÁMETROS BÁSICOS #
+  # ------------------ #
+  # Tasa de descuento
+  disc.rate <- vector.data[7]
+  # Horizonte temporal 
+  hozt.temp <- vector.data[8]
+  
+  
+  # SERIES TEMPORALES #
+  # ----------------- #
+  # Años
+  year.vector <- c(1:hozt.temp)
+  
+  # Construction costs
+  cons.cost.vector <- rep(0, hozt.temp)
+  for (i in 1:length(cons.cost.dist)) {
+    cons.cost.vector[i] <- cons.cost.dist[i]*cons.cost
+  }
+  # Operation and maintenance
+  oper.cost.vector <- rep(0, hozt.temp)
+  for (i in length(cons.cost.dist+1):hozt.temp) {
+    oper.cost.vector[i] <- oper.cost
+  }
+  # Forgone land rent
+  land.cost.vector <- rep(0, hozt.temp)
+  for (i in length(cons.cost.dist+1):hozt.temp) {
+    land.cost.vector[i] <- land.cost
+  }
+  
+  # Improved land alocation
+  land.inco.vector <- rep(0, hozt.temp)
+  for (i in length(cons.cost.dist+1):hozt.temp) {
+    land.inco.vector[i] <- land.inco
+  }
+  #Flood risk
+  flood.inco.vector <- rep(0, hozt.temp)
+  for (i in length(cons.cost.dist+1):hozt.temp) {
+    flood.inco.vector[i] <- flood.inco
+  }
+  # Hunting
+  hunt.inco.vector <- rep(0, hozt.temp)
+  for (i in length(cons.cost.dist+1):hozt.temp) {
+    hunt.inco.vector[i] <- hunt.inco
+  }
+  
+  # --------------------- # 
+  # BENEFITS / Beneficios #
+  # --------------------- #
+  ben.vector <- rep(0, hozt.temp)
+  netben.vector <- rep(0, hozt.temp)
+  for (i in (1):(hozt.temp)) {
+    ben.vector[i] <- land.inco.vector[i]+flood.inco.vector[i]+hunt.inco.vector[i]-
+      cons.cost.vector[i]-oper.cost.vector[i]-land.cost.vector[i]
+    netben.vector[i] <- ben.vector[i]/((1+disc.rate)^i)
+  }
+  
+  # --------------------- # 
+  # NPV + IRR / VAN + TIR #
+  # --------------------- #
+  npv <- sum(netben.vector)
+  npv.result <- npv
+  npv.result
+}
+```
+
+## Definición de la función anal.sensit
+```{r}
+# ------------------------------------ #
+# 2.- FUNCIÓN ANÁLISIS DE SENSIBILIDAD #
+# ------------------------------------ #
+
+anal.sensit <- function( model, pars.vector.values, pars.vector.names) {
+  # Inputs:
+      # función modelo
+      # vector con los parámetros base del modelo
+      # vector con los nombres de los parámetros
+  pars.dim <- length(pars.vector.values)
+  
+  # Steps del análisis. -5%, -2.5%, 0, 2.5%, 5%
+  steps <- c(-0.05, -0.025, 0, 0.025, 0.05)
+  abs.df <- data.frame(steps)
+  perc.df <- data.frame(steps)
+  
+  column.names <- rep(0, pars.dim+1)
+  column.names[1] = "Change in parameter"
+  # Este ciclo está ajustado para cinco steps (a, b, c, d, e)
+  for (i in 1:pars.dim){
+    column.names[i+1] = pars.vector.names[i]
+    pars.vector.sensit <- pars.vector.values
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[1])
+    a <- model(pars.vector.sensit)
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[2])
+    b <- model(pars.vector.sensit)
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[3])
+    c <- model(pars.vector.sensit)
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[4])
+    d <- model(pars.vector.sensit)
+    pars.vector.sensit[i] <- pars.vector.values[i]*(1+steps[5])
+    e <- model(pars.vector.sensit)
+    abs.df <- cbind(abs.df, c(a,b,c,d,e))
+    perc.df <- cbind(perc.df, c(100*(a-c)/c, 100*(b-c)/c, 0, 100*(d-c)/c, 100*(e-c)/c))
+  }
+  colnames(abs.df) <- column.names
+  colnames(perc.df) <- column.names
+  perc.df
+}
+```
+
+## Análisis de sensibilidad
+```{r}
+# ------------------------------------------ #
+# 3.- EJECUCIÓN DEL ANÁLISIS DE SENSIBILIDAD #
+# ------------------------------------------ #
+
+# Copiar y pegar para analizar varias alternativas
+model_1.param <- c(145000000, 860000, 3000000, 860000, 30000, 500000, 0.03, 25)
+model_1.names <- c("cons.cost", "oper.cost", "land.cost",
+                   "land.inco", "flood.inco", "hunt.inco",
+                   "disc.rate", "hozt.temp")
+model_1.sa.df <- anal.sensit(npv.fun, model_1.param, model_1.names)
+model_1.sa.df$project <- "model_1"
+```
+
+## Gráfico de araña
+```{r, echo=FALSE}
+# Manipular los datos para presentarlos
+sa.data.df <- model_1.sa.df[-c(1,2,3,5),]
+sa.data.df <- sa.data.df[,-c(1)]
+
+sa.data.df.melted <- reshape2::melt(sa.data.df)
+sa.data.df.melted$value <- abs(sa.data.df.melted$value)
+
+# Representación gráfica
+library(ggplot2)
+
+# Transformación polar
+coord_radar <- function (theta = "x", start = 0, direction = 1) 
+{
+  theta <- match.arg(theta, c("x", "y"))
+  r <- if (theta == "x") 
+    "y"
+  else "x"
+  ggproto("CordRadar", CoordPolar, theta = theta, r = r, start = start, 
+          direction = sign(direction),
+          is_linear = function(coord) TRUE)
+}
+
+#Colores por defecto
+ggplot(sa.data.df.melted, aes(x = variable, y = value)) +
+  geom_polygon(aes(group = project, color = project), fill = NA, size = 2, show.legend = FALSE) +
+  geom_line(aes(group = project, color = project), size = 2) +
+  theme(strip.text.x = element_text(size = rel(0.8)),
+        axis.text.x = element_text(size = rel(0.8)),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  xlab("") + ylab("") +
+  guides(color = guide_legend(ncol=2, title=NULL)) +
+  coord_radar()
+```
+
+## Análisis de Montecarlo
+```{r}
+# ----------------------- #
+# 4.- ANÁLISIS MONTECARLO #
+# ----------------------- #
+
+model_1.mc.df <- data.frame(npv=numeric(0), irr=numeric(0))
+for (i in 1:500) {
+  # Distribuciones de probabilidad de cada parámetro
+  a <- runif(1, min = 145000000*0.75, max = 145000000*1.25)
+  b <- runif(1, min = 860000*0.75, max = 860000*1.25)
+  c <- runif(1, min = 3000000*0.75, max = 3000000*1.25)
+  d <- runif(1, min = 860000*0.75, max = 860000*1.25)
+  e <- runif(1, min = 30000*0.75, max = 30000*1.25)
+  f <- runif(1, min = 500000*0.75, max = 500000*1.25)
+  g <- runif(1, min = 0.03*0.75, max = 0.03*1.25)
+  h <- runif(1, min = 25, max = 25)
+  model_1.param <- c(a, b, c, d, e, f, g, h)
+  # Llamada a la función y almacenar datos
+  model_1.mc.df <- rbind(model_1.mc.df, npv.fun(model_1.param))
+}
+```
+
+## Función de densidad
+```{r, echo=FALSE}
+# DATA PREPARATION
+colnames(model_1.mc.df) <- c("npv")
+
+model_1.mc.sort <- (model_1.mc.df)
+model_1.mc.sort$npv <- model_1.mc.sort[order(model_1.mc.sort$npv),]
+
+# Sequence by 1/num.cases, 1/500 = 0.004
+model_1.mc.sort <- data.frame(model_1.mc.sort, seq(from = 0.002, to = 1, by = 0.002))
+model_1.mc.sort$proj <- rep('model_1', 500)
+colnames(model_1.mc.sort) <- c("npv", "prob", "model")
+
+npv.df.mix <- model_1.mc.sort
+
+# REPRESENTATION
+library(ggplot2)
+# Plot de funciones de densidad
+ggplot(npv.df.mix, aes(npv, fill = model, colour = model)) +
+  geom_density(alpha = 0.1) +
+  ggtitle("Net Present Value density function") +
+  xlab("Net Present Value") + ylab("Probability")
+```
+
+## Histograma
+```{r, echo=FALSE}
+# Plot de histograma
+ggplot(npv.df.mix, aes(npv, fill = model)) +
+  geom_histogram(binwidth = 1000000) +
+  ggtitle("Net Present Value histogram") +
+  xlab("Net Present Value") + ylab("Num. Cases")
+```
+
+## Función de distribución
+```{r, echo=FALSE}
+# Plot de funciones de distribución
+ggplot(npv.df.mix, aes(npv, colour = model)) +
+  stat_ecdf() +
+  ggtitle("Net Present Value distribution function") +
+  xlab("Net Present Value") + ylab("Probability")
+```
+
+# FIN
