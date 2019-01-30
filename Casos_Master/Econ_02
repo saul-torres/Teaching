@@ -1,0 +1,72 @@
+######################################################
+#                   ECON_02                          #
+######################################################
+
+install.packages("wbstats")
+install.packages("ggplot2")
+install.packages("gridExtra")
+
+library(wbstats)
+
+gdp_current <- wb(indicator = "NY.GDP.MKTP.CD",
+                  country = c("ESP", "USA", "CHN"),
+                  startdate = 1960, enddate = 2015)
+
+gdp_constant <- wb(indicator = "NY.GDP.MKTP.KD",
+                  country = c("ESP", "USA", "CHN"),
+                  startdate = 1960, enddate = 2015)
+
+gdp_deflactor <- wb(indicator = "NY.GDP.DEFL.ZS",
+                  country = c("ESP", "USA", "CHN"),
+                  startdate = 1960, enddate = 2015)
+
+population <- wb(indicator = "SP.POP.TOTL",
+                  country = c("ESP", "USA", "CHN"),
+                  startdate = 1960, enddate = 2015)
+
+gdp_pc_current <- wb(indicator = "NY.GDP.PCAP.CD",
+                  country = c("ESP", "USA", "CHN"),
+                  startdate = 1960, enddate = 2015)
+
+gdp_pc_constant <- wb(indicator = "NY.GDP.PCAP.KD",
+                     country = c("ESP", "USA", "CHN"),
+                     startdate = 1960, enddate = 2015)
+
+
+
+library(ggplot2)
+gdp_current_plot <- ggplot(gdp_current, aes(x=date, y=value, group=iso3c, colour=iso3c)) +
+  geom_line() + 
+  xlab("years") + ylab("GDP Current") +
+  scale_colour_discrete(name="Country")
+
+gdp_constant_plot <- ggplot(gdp_constant, aes(x=date, y=value, group=iso3c, colour=iso3c)) +
+  geom_line() + 
+  xlab("years") + ylab("GDP Constant") +
+  scale_colour_discrete(name="Country")
+
+gdp_deflactor_plot <- ggplot(gdp_deflactor, aes(x=date, y=value, group=iso3c, colour=iso3c)) +
+  geom_line() + 
+  xlab("years") + ylab("GDP Deflactor") +
+  scale_colour_discrete(name="Country")
+
+population_plot <- ggplot(population, aes(x=date, y=value, group=iso3c, colour=iso3c)) +
+  geom_line() + 
+  xlab("years") + ylab("Population") +
+  scale_colour_discrete(name="Country")
+
+gdp_pc_current_plot <- ggplot(gdp_pc_current, aes(x=date, y=value, group=iso3c, colour=iso3c)) +
+  geom_line() + 
+  xlab("years") + ylab("GDP per cápita Current") +
+  scale_colour_discrete(name="Country")
+
+gdp_pc_constant_plot <- ggplot(gdp_pc_constant, aes(x=date, y=value, group=iso3c, colour=iso3c)) +
+  geom_line() + 
+  xlab("years") + ylab("GDP per cápita Constant") +
+  scale_colour_discrete(name="Country")
+
+library(gridExtra)
+grid.arrange(gdp_current_plot, gdp_constant_plot,
+          gdp_deflactor_plot, population_plot,
+          gdp_pc_current_plot, gdp_pc_constant_plot,
+nrow=3)
