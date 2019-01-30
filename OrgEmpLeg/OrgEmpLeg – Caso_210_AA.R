@@ -79,7 +79,7 @@ for (i in 1:length(year.vector)){
 
 # Recovery costs
 reco.cost.vector <- rep(0, length(year.vector))
-reco.cost.vector[length(year.vector):length(year.vector)] <- reco.cost
+reco.cost.vector[length(year.vector)] <- reco.cost
 
 
 # Incomes
