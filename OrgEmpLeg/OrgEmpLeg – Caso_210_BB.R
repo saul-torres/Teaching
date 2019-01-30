@@ -56,36 +56,36 @@ mine.npv.fun <- function (vector.data) {
   
   # Construction costs
   cons.cost.vector <- rep(0, length(year.vector))
-  for (i in 0:2){
+  for (i in 1:3){
     cons.cost.vector[i] <- cons.cost/3
   }
   
   # General management costs
   mgmt.cost.vector <- rep(0, length(year.vector))
-  for (i in 3:length(year.vector)){
+  for (i in 4:length(year.vector)){
     mgmt.cost.vector[i] <- mgmt.cost
   }
   
   # Operation costs
   oper.cost.vector <- rep(0, length(year.vector))
-  for (i in 3:length(year.vector)){
+  for (i in 4:length(year.vector)){
     oper.cost.vector[i] <- oper.cost*prod.data
   }
   
   # Human resources costs
   humr.cost.vector <- rep(0, length(year.vector))
   for (i in 1:length(year.vector)){
-    humr.cost.vector[i] <- humr.cost*150
+    humr.cost.vector[i] <- humr.cost
   }
   
   # Recovery costs
   reco.cost.vector <- rep(0, length(year.vector))
-  reco.cost.vector[3:length(year.vector)] <- reco.cost
+  reco.cost.vector[length(year.vector)] <- reco.cost
   
   
   # Incomes
   inco.cost.vector <- rep(0, length(year.vector))
-  for (i in 3:(length(year.vector)-1)){
+  for (i in 4:(length(year.vector)-1)){
     inco.cost.vector[i] <- pric.inco*prod.data
   }
   
