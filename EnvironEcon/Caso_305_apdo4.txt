@@ -1,0 +1,50 @@
+Maximize
+  produccion: 10X1A + 15X1C + 15X2C + 20X2M 
+
+Subject To
+  Aport1: I1 = 1.25
+  Aport2: I2 = 0.75
+  
+  Nodo1: I1 - Q1 = 0
+  Nodo2: Q1 - Q2 - W1 = 0
+  Nodo3: Q2 - Q3 - W3 = 0
+  Nodo4: Q3 + R3 - Q4 = 0
+  Nodo5: Q4 + R1 - Q5 = 0
+  Nodo6: Q5 + I2 - Q6 = 0
+  Nodo7: Q6 - Q7 - W2 = 0
+  Nodo8: Q7 - Q8 - W4 = 0
+  Nodo9: Q8 + R4 - Q9 = 0
+  Nodo10: Q9 + R2 - Q10 = 0
+  Nodo11: Q10 - Q11 - W5 = 0
+  Nodo12: Q11 + R5 - Q12 = 0
+  
+  C1Rew: 0.9W3 - R3 = 0
+  C2Rew: 0.9W4 - R4 = 0
+  F1Rew: 0.4W1 - R1 = 0
+  F2Rew: 0.4W2 - R2 = 0
+  EPRew: 0.2W5 - R5 = 0
+  
+  Qeco: Qeco = 0.2
+  Qnav: Qnav = 1
+  Qbio: Qbio = 0.5
+  Q1: Q1 - Qeco >= 0
+  Q2: Q3 - Qeco >= 0
+  Q3: Q3 - Qeco >= 0
+  Q4: Q4 - Qeco >= 0
+  Q5: Q5 - Qeco >= 0
+  Q6: Q6 - Qbio >= 0
+  Q7: Q7 - Qeco >= 0
+  Q8: Q8 - Qeco >= 0
+  Q9: Q9 - Qeco >= 0
+  Q10: Q10 - Qeco >= 0
+  Q11: Q11 - Qeco >= 0
+  Q12: Q12 - Qnav >= 0
+  
+  Suelo1: 5X1A + 4X1C <= 5
+  Suelo2: 4X2C + 5X2M <= 10
+  Agua1: 2X1A + 8X1C - W1 <= 0
+  Agua2: 8X2C + 5X2M - W2 <= 0
+  Ferti: X1A + X1C + X2C + X2M <= 12
+  Labor: 2X1A + 3X1C + 3X2C + 4X2M <= 10
+
+End
