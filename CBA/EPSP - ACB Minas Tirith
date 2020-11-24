@@ -1,0 +1,417 @@
+########################
+###                  ###
+### ACB MINAS TIRITH ###
+###                  ###
+########################
+
+# ----------------------------------- #
+# 1A.- FUNCI?N VALOR ACTUALIZADO NETO # Devuelve el npv
+# ----------------------------------- #
+
+cc.npv.fun <- function (vector.data) { 
+  # VECTOR DATA : vector en el cual se incluyan los par?metros siguientes
+  # (fijar, dejar como par?metros variables seg?n deseos)
+  # (se introducen como vector para el posterior an?lisis de sensibilidad)
+  
+  # VARIABLES #
+  # --------- #
+  # Disponibilidad del recurso
+  disp.tota <- vector.data[1]
+  # Demanda anual
+  dema.anua <- vector.data[2]
+  # Extracci?n anual
+  extr.anua <- vector.data[3]
+  # Precio de venta base
+  prec.base <- vector.data[4]
+  
+  # COSTES #
+  # ------ #
+  # Inversi?n
+  cost.inve <- vector.data[5]
+  # Mantenimiento
+  cost.mant <- vector.data[6]
+  # Explotacion variable
+  cost.expl <- vector.data[7]
+  
+  # PAR?METROS B?SICOS #
+  # ------------------ #
+  # Tasa de descuento
+  disc.rate <- vector.data[8]
+  # Horizonte temporal 
+  hozt.temp <- vector.data[9]
+  
+  
+  # SERIES TEMPORALES #
+  # ----------------- #
+  # A?os
+  year.vector <- c(1:hozt.temp)
+  
+  # Construction costs
+  cost.inve.vector <- rep(0, hozt.temp)
+  cost.inve.vector[1] <- cost.inve
+  
+  # Costes explotacion
+  cost.expl.vector <- rep(0, hozt.temp)
+  cost.mant.vector <- rep(0, hozt.temp)
+  ingr.expl.vector <- rep(0, hozt.temp)
+  
+  # Disponibilidad del recurso
+  disp.recu.vector <- rep(0, hozt.temp)
+  disp.recu.vector[1] <- disp.tota
+  extr.anua.vector <- rep(0, hozt.temp)
+  
+  for (i in 2:hozt.temp) {
+    cost.expl.vector[i] <- extr.anua*cost.expl
+    cost.mant.vector[i] <- cost.mant
+    extr.anua.vector[i] <- min(disp.recu.vector[i-1], extr.anua)
+    ingr.expl.vector[i] <- min(dema.anua, extr.anua.vector[i])*prec.base
+    disp.recu.vector[i] <- max(disp.recu.vector[i-1]-extr.anua.vector[i], 0)
+  }
+  
+  
+  # --------------------- # 
+  # BENEFITS / Beneficios #
+  # --------------------- #
+  ben.vector <- rep(0, hozt.temp)
+  netben.vector <- rep(0, hozt.temp)
+  for (i in (1):(hozt.temp)) {
+    ben.vector[i] <- -cost.inve.vector[i]-cost.expl.vector[i]-cost.mant.vector[i]+
+      ingr.expl.vector[i]
+    netben.vector[i] <- ben.vector[i]/((1+disc.rate)^i)
+  }
+  
+  # --------- # 
+  # NPV / VAN #
+  # --------- #
+  npv.result <- sum(netben.vector)
+  npv.result
+}
+
+
+
+# ----------------------------------- #
+# 1B.- FUNCI?N VALOR ACTUALIZADO NETO # Devuelve vector de net.benefits
+# ----------------------------------- #
+
+cc.netben.fun <- function (vector.data) { 
+  # VECTOR DATA : vector en el cual se incluyan los par?metros siguientes
+  # (fijar, dejar como par?metros variables seg?n deseos)
+  # (se introducen como vector para el posterior an?lisis de sensibilidad)
+  
+  # VARIABLES #
+  # --------- #
+  # Disponibilidad del recurso
+  disp.tota <- vector.data[1]
+  # Demanda anual
+  dema.anua <- vector.data[2]
+  # Extracci?n anual
+  extr.anua <- vector.data[3]
+  # Precio de venta base
+  prec.base <- vector.data[4]
+  
+  # COSTES #
+  # ------ #
+  # Inversi?n
+  cost.inve <- vector.data[5]
+  # Mantenimiento
+  cost.mant <- vector.data[6]
+  # Explotacion variable
+  cost.expl <- vector.data[7]
+  
+  # PAR?METROS B?SICOS #
+  # ------------------ #
+  # Tasa de descuento
+  disc.rate <- vector.data[8]
+  # Horizonte temporal 
+  hozt.temp <- vector.data[9]
+  
+  
+  # SERIES TEMPORALES #
+  # ----------------- #
+  # A?os
+  year.vector <- c(1:hozt.temp)
+  
+  # Construction costs
+  cost.inve.vector <- rep(0, hozt.temp)
+  cost.inve.vector[1] <- cost.inve
+  
+  # Costes explotacion
+  cost.expl.vector <- rep(0, hozt.temp)
+  cost.mant.vector <- rep(0, hozt.temp)
+  ingr.expl.vector <- rep(0, hozt.temp)
+  
+  # Disponibilidad del recurso
+  disp.recu.vector <- rep(0, hozt.temp)
+  disp.recu.vector[1] <- disp.tota
+  extr.anua.vector <- rep(0, hozt.temp)
+  
+  for (i in 2:hozt.temp) {
+    cost.expl.vector[i] <- extr.anua*cost.expl
+    cost.mant.vector[i] <- cost.mant
+    extr.anua.vector[i] <- min(disp.recu.vector[i-1], extr.anua)
+    ingr.expl.vector[i] <- min(dema.anua, extr.anua.vector[i])*prec.base
+    disp.recu.vector[i] <- max(disp.recu.vector[i-1]-extr.anua.vector[i], 0)
+  }
+  
+  
+  # --------------------- # 
+  # BENEFITS / Beneficios #
+  # --------------------- #
+  ben.vector <- rep(0, hozt.temp)
+  netben.vector <- rep(0, hozt.temp)
+  acum.netben.vector <- rep(0, hozt.temp)
+  for (i in (1):(hozt.temp)) {
+    ben.vector[i] <- -cost.inve.vector[i]-cost.expl.vector[i]-cost.mant.vector[i]+
+                      ingr.expl.vector[i]
+    netben.vector[i] <- ben.vector[i]/((1+disc.rate)^i)
+    if (i==1) {acum.netben.vector[i] <- netben.vector[i]}
+    else {acum.netben.vector[i] <- acum.netben.vector[i-1]+netben.vector[i]}
+  }
+  
+  # --------- # 
+  # NPV / VAN #
+  # --------- #
+  npv.result <- acum.netben.vector
+  npv.result
+}
+
+
+
+# ----------------------------------- #
+# 1C.- FUNCI?N VALOR ACTUALIZADO NETO # Devuelve dataframe con flujos
+# ----------------------------------- #
+
+cc.table.fun <- function (vector.data) { 
+  # VECTOR DATA : vector en el cual se incluyan los par?metros siguientes
+  # (fijar, dejar como par?metros variables seg?n deseos)
+  # (se introducen como vector para el posterior an?lisis de sensibilidad)
+  
+  # VARIABLES #
+  # --------- #
+  # Disponibilidad del recurso
+  disp.tota <- vector.data[1]
+  # Demanda anual
+  dema.anua <- vector.data[2]
+  # Extracci?n anual
+  extr.anua <- vector.data[3]
+  # Precio de venta base
+  prec.base <- vector.data[4]
+  
+  # COSTES #
+  # ------ #
+  # Inversi?n
+  cost.inve <- vector.data[5]
+  # Mantenimiento
+  cost.mant <- vector.data[6]
+  # Explotacion variable
+  cost.expl <- vector.data[7]
+  
+  # PAR?METROS B?SICOS #
+  # ------------------ #
+  # Tasa de descuento
+  disc.rate <- vector.data[8]
+  # Horizonte temporal 
+  hozt.temp <- vector.data[9]
+  
+  
+  # SERIES TEMPORALES #
+  # ----------------- #
+  # A?os
+  year.vector <- c(1:hozt.temp)
+  
+  # Construction costs
+  cost.inve.vector <- rep(0, hozt.temp)
+  cost.inve.vector[1] <- cost.inve
+  
+  # Costes explotacion
+  cost.expl.vector <- rep(0, hozt.temp)
+  cost.mant.vector <- rep(0, hozt.temp)
+  ingr.expl.vector <- rep(0, hozt.temp)
+  
+  # Disponibilidad del recurso
+  disp.recu.vector <- rep(0, hozt.temp)
+  disp.recu.vector[1] <- disp.tota
+  extr.anua.vector <- rep(0, hozt.temp)
+  
+  for (i in 2:hozt.temp) {
+    cost.expl.vector[i] <- extr.anua*cost.expl
+    cost.mant.vector[i] <- cost.mant
+    extr.anua.vector[i] <- min(disp.recu.vector[i-1], extr.anua)
+    ingr.expl.vector[i] <- min(dema.anua, extr.anua.vector[i])*prec.base
+    disp.recu.vector[i] <- max(disp.recu.vector[i-1]-extr.anua.vector[i], 0)
+  }
+  
+  
+  # --------------------- # 
+  # BENEFITS / Beneficios #
+  # --------------------- #
+  ben.vector <- rep(0, hozt.temp)
+  netben.vector <- rep(0, hozt.temp)
+  inco.suma.vector <- rep(0, hozt.temp)
+  cost.suma.vector <- rep(0, hozt.temp)
+  acum.netben.vector <- rep(0, hozt.temp)
+  for (i in (1):(hozt.temp)) {
+    inco.suma.vector[i] <- ingr.expl.vector[i]
+    cost.suma.vector[i] <- -cost.inve.vector[i]-cost.expl.vector[i]-cost.mant.vector[i]
+    ben.vector[i] <- -cost.inve.vector[i]-cost.expl.vector[i]-cost.mant.vector[i] +
+                      ingr.expl.vector[i]
+    netben.vector[i] <- ben.vector[i]/((1+disc.rate)^i)
+    if (i==1) {acum.netben.vector[i] <- netben.vector[i]}
+    else {acum.netben.vector[i] <- acum.netben.vector[i-1]+netben.vector[i]}
+  }
+  
+  # --------- # 
+  # DATAFRAME #
+  # --------- #
+  table.result <- cbind(year.vector, inco.suma.vector, cost.suma.vector,
+                        ben.vector, netben.vector, acum.netben.vector,
+                        dema.anua, extr.anua.vector, disp.recu.vector)
+  table.result
+}
+
+
+
+# ---------------- #
+# 2.- VALORES BASE #
+# ---------------- #
+
+disp.tota <- 2000000
+dema.anua <- 35000
+extr.anua <- 35000
+prec.base <- 7
+cost.inve <- 2000000
+cost.mant <- cost.inve*0.03
+cost.expl <- 2
+disc.rate <- 0.045
+hozt.temp <- 50
+
+
+
+# -------------------- #
+# 3.- VAN ALTERNATIVAS #
+# -------------------- #
+
+# Alternativa 1 - Caso base
+Alt.1.vector <- c(disp.tota, dema.anua, extr.anua, prec.base,
+                  cost.inve, cost.mant, cost.expl,
+                  disc.rate, hozt.temp)
+Alt.1.npv <- cc.npv.fun(Alt.1.vector)
+Alt.1.netben.vector <- cc.netben.fun(Alt.1.vector)
+Alt.1.table <- cc.table.fun(Alt.1.vector)
+
+
+# DATA PREPARATION
+Alt.1.netben.df <- cbind(Alt.1.netben.vector, c(1:hozt.temp))
+colnames(Alt.1.netben.df) <- c("values", "years")
+Alt.1.netben.df <- as.data.frame(Alt.1.netben.df)
+# REPRESENTATION
+library(ggplot2)
+ggplot(Alt.1.netben.df,aes(years, values)) + 
+  geom_line(alpha=.5) + 
+  xlab("A?os") + 
+  ylab("Euros")
+
+
+
+# ----------------------- #
+# 4.- AN?LISIS MONTECARLO #
+# ----------------------- #
+
+# Alternativa 1 - Caso base
+model_1.mc.df <- data.frame(npv=numeric(0))
+model_1.mc.netben.df <- data.frame(npv=numeric(0), years=numeric(0), simul=numeric(0))
+for (index in 1:500) {
+  # Distribuciones de probabilidad de cada par?metro
+  a <- runif(1, min = Alt.1.vector[1]*1.00, max = Alt.1.vector[1]*1.00) #disp.tota NO VARIA
+  b <- runif(1, min = Alt.1.vector[2]*0.85, max = Alt.1.vector[2]*1.15) #dema.anua
+  c <- runif(1, min = Alt.1.vector[3]*0.85, max = Alt.1.vector[3]*1.15) #extr.anua
+  d <- runif(1, min = Alt.1.vector[4]*0.85, max = Alt.1.vector[4]*1.15) #prec.base
+  e <- runif(1, min = Alt.1.vector[5]*1.00, max = Alt.1.vector[5]*1.00) #cost.inve NO VARIA
+  f <- runif(1, min = Alt.1.vector[6]*0.75, max = Alt.1.vector[6]*1.25) #cost.mant 
+  g <- runif(1, min = Alt.1.vector[7]*0.75, max = Alt.1.vector[7]*1.25) #cost.expl
+  h <- runif(1, min = Alt.1.vector[8]*0.85, max = Alt.1.vector[8]*1.15) #disc.rate
+  i <- runif(1, min = Alt.1.vector[9]*1.00, max = Alt.1.vector[9]*1.00) #hori.temp
+  
+  model_1.param <- c(a, b, c, d, e, f, g, h, i)
+  # Llamada a la funci?n y almacenar datos de npv
+  model_1.mc.df <- rbind(model_1.mc.df, cc.npv.fun(model_1.param))
+  
+  # Llamada a la funci?n y almacenar datos de paths
+  model_1b.mc.netben.df <- cbind(cc.netben.fun(model_1.param), c(1:hozt.temp), index)
+  colnames(model_1b.mc.netben.df) <- c("values", "years", "simul")
+  model_1b.mc.netben.df <- as.data.frame(model_1b.mc.netben.df)
+  model_1.mc.netben.df <- rbind(model_1.mc.netben.df, model_1b.mc.netben.df)
+  
+}
+
+# DATA PREPARATION
+colnames(model_1.mc.df) <- c("npv")
+model_1.mc.sort <- (model_1.mc.df)
+model_1.mc.sort$npv <- model_1.mc.sort[order(model_1.mc.sort$npv),]
+# Sequence by 1/num.cases, 1/500 = 0.004
+model_1.mc.sort <- data.frame(model_1.mc.sort, seq(from = 0.002, to = 1, by = 0.002))
+model_1.mc.sort$proj <- rep('Caso Base', 500)
+colnames(model_1.mc.sort) <- c("npv", "prob", "model")
+
+# REPRESENTATION
+library(ggplot2)
+library(scales)
+library(grid)
+
+# Plot de funciones de densidad
+ggplot(model_1.mc.sort, aes(npv, fill = model, colour = model)) +
+  geom_density(alpha = 0.1) +
+  labs(x="Valor Actualizado Neto", 
+       y="Probabilidad",
+       title="Minas Tirith (Minas Anor)",
+       subtitle="Alternativa 1") +
+  scale_x_continuous(labels = comma) +
+  scale_y_continuous(labels = comma) +
+  geom_vline(xintercept = 0, colour="red", size=0.65, linetype = "longdash") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) +
+  guides(colour=FALSE, fill=FALSE)
+
+
+# Plot de paths
+ggplot(model_1.mc.netben.df,aes(years, values, group=simul, colour=simul)) + 
+  geom_line(alpha=.5) +
+  labs(x="A?os", 
+       y="Valor Actualizado Neto",
+       title="Minas Tirith (Minas Anor)",
+       subtitle="Alternativa 1") +
+  scale_x_continuous(labels = comma) +
+  scale_y_continuous(labels = comma) +geom_hline(yintercept = 0, colour="red", size=0.65, linetype = "longdash") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) +
+  guides(colour=FALSE, fill=FALSE)
+
+
+# Plot combinado
+plot_main <- ggplot(model_1.mc.netben.df,aes(years, values, group=simul, colour=simul)) + 
+  geom_line(alpha=.5) +labs(x="A?os", 
+       y="Valor Actualizado Neto") +
+  scale_x_continuous(labels = comma) +
+  scale_y_continuous(labels = comma) +
+  guides(colour=FALSE) + 
+  geom_hline(yintercept = 0, colour="red", size=0.65, linetype = "longdash") +
+  geom_vline(xintercept = 30, colour="orangered4", size=0.65, linetype = "longdash") +
+  geom_vline(xintercept = 40, colour="goldenrod4", size=0.65, linetype = "longdash") +
+  geom_vline(xintercept = 50, colour="dodgerblue4", size=0.65, linetype = "longdash")
+
+# Gr?fico secundario. Funci?n de densidad del VAN (a?o 21)
+plot_right <- ggplot(data=model_1.mc.netben.df) + 
+  geom_density(aes(ifelse(years==30,values,NA)), size = 0.65, colour="orangered4", fill='#fc8d59', alpha=.25) +
+  geom_density(aes(ifelse(years==40,values,NA)), size = 0.65, colour="goldenrod4", fill='#ffffbf', alpha=.25) +
+  geom_density(aes(ifelse(years==50,values,NA)), size = 0.65, colour="dodgerblue4", fill='#2b83ba', alpha=.25) + 
+  coord_flip() +
+  theme(legend.position=c(0.75,0.25)) +
+  xlab("") +
+  ylab("Probabilidad") +
+  geom_vline(xintercept = 0, colour="red", size=0.65, linetype = "longdash") +
+  scale_x_continuous(labels = comma, limits = c(min(model_1.mc.netben.df$values), max(model_1.mc.netben.df$values)))
+
+# Uni?n de los dos gr?ficos
+library(gridExtra)
+plot_mix <- grid.arrange(plot_main, plot_right, ncol=2, nrow=1,
+                         widths = c(3, 1),
+                         top=textGrob("Minas Tirith (Minas Anor) - Alternativa 1", gp=gpar(fontsize=13)))
+plot_mix
